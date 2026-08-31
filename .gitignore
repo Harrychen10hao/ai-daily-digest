@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+data/latest_articles.json
+data/latest_digest.md
+data/*.log
+*.egg-info/

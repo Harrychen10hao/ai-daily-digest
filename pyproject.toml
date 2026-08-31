@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-daily-digest"
+version = "0.1.0"
+description = "Independent AI, product, UX and technology news digest for Feishu"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+  "feedparser>=6.0.11",
+  "httpx>=0.27.0",
+  "PyYAML>=6.0.1",
+  "python-dotenv>=1.0.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0", "pytest-httpx>=0.30.0"]
+
+[project.scripts]
+ai-daily-digest = "ai_daily_digest.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"

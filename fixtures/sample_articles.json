@@ -1,0 +1,26 @@
+[
+  {
+    "title": "AI Agent 工作流的交互设计案例",
+    "url": "https://example.com/ai-agent-design",
+    "summary": "文章讨论如何让 Agent 的计划、执行和人工确认过程更容易理解。",
+    "published_at": "2026-08-31T00:00:00+00:00",
+    "source_name": "示例 AI 产品来源",
+    "category": "ai_product"
+  },
+  {
+    "title": "从用户研究到设计系统的实践复盘",
+    "url": "https://example.com/ux-research-review",
+    "summary": "一篇关于用户研究如何进入组件和设计决策的项目复盘。",
+    "published_at": "2026-08-30T23:00:00+00:00",
+    "source_name": "示例 UX 来源",
+    "category": "ux_design"
+  },
+  {
+    "title": "开发者工具正在改变 AI 产品交付方式",
+    "url": "https://example.com/ai-developer-tools",
+    "summary": "新的开发者工具让 AI 能力更快进入产品原型和生产环境。",
+    "published_at": "2026-08-30T22:00:00+00:00",
+    "source_name": "示例科技来源",
+    "category": "tech"
+  }
+]

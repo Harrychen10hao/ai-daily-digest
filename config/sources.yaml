@@ -1,0 +1,51 @@
+sources:
+  # 只在此文件维护来源 URL；enabled: false 的来源不会请求。
+  - name: Hugging Face Blog
+    url: https://huggingface.co/blog/feed.xml
+    category: ai_product
+    kind: rss
+    enabled: true
+    priority: 1
+  - name: Google AI Blog
+    url: https://blog.google/technology/ai/rss/
+    category: ai_product
+    kind: rss
+    enabled: true
+    priority: 1
+  - name: Nielsen Norman Group
+    url: https://www.nngroup.com/feed/rss/
+    category: ux_design
+    kind: rss
+    enabled: true
+    priority: 1
+  - name: Smashing Magazine
+    url: https://www.smashingmagazine.com/feed/
+    category: ux_design
+    kind: rss
+    enabled: true
+    priority: 1
+  - name: TechCrunch AI
+    url: https://techcrunch.com/category/artificial-intelligence/feed/
+    category: tech
+    kind: rss
+    enabled: true
+    priority: 2
+  - name: The Verge AI
+    url: https://www.theverge.com/rss/ai-artificial-intelligence/index.xml
+    category: tech
+    kind: rss
+    enabled: true
+    priority: 2
+  - name: arXiv Human-Computer Interaction
+    url: https://export.arxiv.org/rss/cs.HC
+    category: paper
+    kind: rss
+    enabled: true
+    priority: 2
+  # GitHub Trending 没有稳定的官方 RSS；开启后使用公开 Search API，可能受匿名速率限制。
+  - name: GitHub AI Repositories
+    url: https://api.github.com/search/repositories?q=topic%3Aai+stars%3A%3E100&sort=updated&order=desc&per_page=20
+    category: github
+    kind: github_search
+    enabled: false
+    priority: 3
