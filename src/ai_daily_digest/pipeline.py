@@ -11,7 +11,7 @@ from .config import Settings, load_sources
 from .dedupe import deduplicate
 from .fetchers import NewsFetcher
 from .filtering import select_articles
-from .formatter import format_digest, format_feishu_posts
+from .formatter import format_digest, format_feishu_cards
 from .models import Article
 from .summarize import LLMClient, MissingCredentialError, SummarizationError, build_fallback_digest
 
@@ -89,7 +89,7 @@ def send_pipeline(settings: Settings) -> list[dict[str, Any]]:
     if not settings.feishu_webhook_url:
         raise MissingCredentialError("未配置 FEISHU_WEBHOOK_URL，无法发送飞书消息。")
     digest = load_digest(settings.data_dir / "latest_digest.json")
-    messages = format_feishu_posts(digest, max_chars=settings.feishu_max_chars)
+    messages = format_feishu_cards(digest, max_chars=settings.feishu_max_chars)
     from .feishu import FeishuClient
     client = FeishuClient(settings.feishu_webhook_url, timeout=settings.request_timeout, retries=settings.request_retries)
     try:

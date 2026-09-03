@@ -23,7 +23,7 @@ def test_feishu_client_retries_after_transient_error():
     assert len(attempts) == 2
 
 
-def test_feishu_client_sends_post_payload():
+def test_feishu_client_sends_interactive_card_payload():
     requests = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -36,9 +36,9 @@ def test_feishu_client_sends_post_payload():
         backoff_seconds=0,
     )
     client.send_posts([{
-        "msg_type": "post",
-        "content": {"post": {"zh_cn": {"title": "早报", "content": [[{"tag": "text", "text": "内容"}]]}}},
+        "msg_type": "interactive",
+        "card": {"config": {"wide_screen_mode": True}, "elements": [{"tag": "hr"}]},
     }])
 
     assert len(requests) == 1
-    assert json.loads(requests[0].content)["msg_type"] == "post"
+    assert json.loads(requests[0].content)["msg_type"] == "interactive"

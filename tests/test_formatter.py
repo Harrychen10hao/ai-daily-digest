@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from ai_daily_digest.formatter import format_digest, format_feishu_posts, split_message
+from ai_daily_digest.formatter import format_digest, format_feishu_cards, format_feishu_posts, split_message
 from ai_daily_digest.models import Article
 
 
@@ -116,3 +116,52 @@ def test_format_feishu_posts_does_not_emit_empty_text_elements():
     elements = [element for line in posts[0]["content"]["post"]["zh_cn"]["content"] for element in line]
 
     assert not any(element.get("tag") == "text" and element.get("text") == "" for element in elements)
+
+
+def test_format_feishu_cards_has_bold_modules_dividers_emojis_and_links():
+    digest = {
+        "trend": "AI 产品从聊天走向工作流。",
+        "highlights": [{
+            "title": "Agent 交互更新",
+            "summary": "让计划、执行和人工确认更容易理解。",
+            "why": "值得观察产品交互变化。",
+            "url": "https://example.com/agent",
+        }],
+        "ai_product": [], "ux_design": [], "tech": [], "paper": [], "github": [],
+        "action_suggestions": [],
+    }
+
+    cards = format_feishu_cards(digest, datetime(2026, 9, 3, tzinfo=timezone.utc))
+    card = cards[0]
+    elements = card["card"]["elements"]
+    markdown = "\n".join(element["text"]["content"] for element in elements if element["tag"] == "div")
+
+    assert card["msg_type"] == "interactive"
+    assert "**Agent 交互更新**" in markdown
+    assert "🤖" in markdown
+    assert "[查看原文](https://example.com/agent)" in markdown
+    assert sum(element["tag"] == "hr" for element in elements) >= 2
+    assert "###" not in markdown
+
+
+def test_format_feishu_cards_splits_between_complete_modules():
+    item = {"title": "标题", "summary": "摘要" * 20, "why": "原因", "url": "https://example.com/a"}
+    digest = {
+        "trend": "趋势",
+        "highlights": [item, {**item, "url": "https://example.com/b"}],
+        "ai_product": [], "ux_design": [], "tech": [], "paper": [], "github": [],
+        "action_suggestions": [],
+    }
+
+    cards = format_feishu_cards(digest, max_chars=180)
+
+    assert len(cards) > 1
+    assert all(card["msg_type"] == "interactive" for card in cards)
+    assert all(any(element["tag"] == "hr" for element in card["card"]["elements"]) for card in cards)
+    all_markdown = "\n".join(
+        element["text"]["content"]
+        for card in cards
+        for element in card["card"]["elements"]
+        if element["tag"] == "div"
+    )
+    assert all_markdown.count("[查看原文]") == 2

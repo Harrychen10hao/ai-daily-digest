@@ -16,6 +16,16 @@ SECTION_NAMES = {
 
 WEEKDAYS = ("一", "二", "三", "四", "五", "六", "日")
 
+CARD_EMOJIS = {
+    "highlights": "🤖",
+    "ai_product": "🤖",
+    "ux_design": "🎨",
+    "tech": "⚡",
+    "paper": "📚",
+    "github": "🧰",
+    "action": "✅",
+}
+
 
 def _single_line(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value or "")).strip()
@@ -145,6 +155,120 @@ def format_feishu_posts(
         )
         for index, lines in enumerate(chunks, start=1)
     ]
+
+
+def _card_div(content: str) -> dict[str, Any]:
+    return {"tag": "div", "text": {"tag": "lark_md", "content": content}}
+
+
+def _card_item_content(item: dict[str, Any], section: str, number: str = "") -> str:
+    title = _single_line(item.get("title", "未命名")) or "未命名"
+    summary = _single_line(item.get("summary", ""))
+    why = _single_line(item.get("why", ""))
+    url = _single_line(item.get("url", ""))
+    if section == "highlights":
+        summary_label = "一句话摘要"
+        why_label = "为什么值得关注"
+    else:
+        summary_label = {
+            "ai_product": "内容摘要",
+            "ux_design": "核心观点",
+            "tech": "发生了什么",
+            "paper": "核心内容",
+            "github": "项目概览",
+        }.get(section, "内容摘要")
+        why_label = {
+            "ai_product": "对产品或 UX 设计的启发",
+            "ux_design": "对设计师工作的启发",
+            "tech": "可能产生的影响",
+            "paper": "值得关注的原因",
+            "github": "值得关注的原因",
+        }.get(section, "值得关注的原因")
+
+    lines = [f"{CARD_EMOJIS.get(section, '📰')} {number} **{title}**".replace("  ", " ")]
+    if summary:
+        lines.append(f"{summary_label}：{summary}")
+    if why:
+        lines.append(f"{why_label}：{why}")
+    if url:
+        lines.append(f"🔗 [查看原文]({url})")
+    return "\n".join(lines)
+
+
+def _card_payload(elements: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "msg_type": "interactive",
+        "card": {
+            "config": {"wide_screen_mode": True},
+            "elements": elements,
+        },
+    }
+
+
+def _card_element_length(element: dict[str, Any]) -> int:
+    if element.get("tag") == "div":
+        return len(str(element.get("text", {}).get("content", "")))
+    return 1
+
+
+def format_feishu_cards(
+    digest: dict[str, Any],
+    published_at: datetime | None = None,
+    max_chars: int = 6000,
+) -> list[dict[str, Any]]:
+    """Render a digest as Feishu interactive cards with Markdown support."""
+    if max_chars < 1:
+        raise ValueError("max_chars 必须大于 0")
+    published_at = published_at or datetime.now(ZoneInfo("Asia/Shanghai"))
+    if published_at.tzinfo is not None:
+        published_at = published_at.astimezone(ZoneInfo("Asia/Shanghai"))
+
+    date_label = f"{published_at.year}年{published_at.month}月{published_at.day}日 · 星期{WEEKDAYS[published_at.weekday()]}"
+    header = [
+        _card_div(f"**📰 AI 产品与 UX 科技早报**\n{date_label}"),
+        {"tag": "hr"},
+    ]
+    trend = _single_line(digest.get("trend", ""))
+    if trend:
+        header.extend([_card_div(f"**今日趋势**\n{trend}"), {"tag": "hr"}])
+
+    blocks: list[list[dict[str, Any]]] = []
+    highlights = digest.get("highlights", [])
+    if highlights:
+        blocks.append([_card_div("**今日重点**")])
+        circled_numbers = ("①", "②", "③")
+        for index, item in enumerate(highlights[:3]):
+            blocks.append([_card_div(_card_item_content(item, "highlights", circled_numbers[index])), {"tag": "hr"}])
+
+    for key, name in SECTION_NAMES.items():
+        items = digest.get(key, [])
+        if not items:
+            continue
+        blocks.append([_card_div(f"**{name}**")])
+        for item in items[:4]:
+            blocks.append([_card_div(_card_item_content(item, key)), {"tag": "hr"}])
+
+    actions = [_single_line(item) for item in digest.get("action_suggestions", []) if _single_line(item)]
+    if actions:
+        blocks.append([_card_div(f"**{CARD_EMOJIS['action']} 今日行动建议**\n" + "\n".join(f"• {item}" for item in actions[:3])), {"tag": "hr"}])
+
+    chunks: list[list[dict[str, Any]]] = []
+    current = list(header)
+    current_length = sum(_card_element_length(element) for element in current)
+    for block in blocks:
+        block_length = sum(_card_element_length(element) for element in block)
+        if current != header and current_length + block_length > max_chars:
+            chunks.append(current)
+            current = list(header)
+            current_length = sum(_card_element_length(element) for element in current)
+        current.extend(block)
+        current_length += block_length
+    if current:
+        chunks.append(current)
+    if not chunks:
+        chunks = [header]
+
+    return [_card_payload(elements) for elements in chunks]
 
 
 def _item_lines(item: dict[str, str], section: str) -> list[str]:

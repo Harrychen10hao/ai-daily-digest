@@ -1,5 +1,7 @@
 # Feishu Rich Text Digest Implementation Plan
 
+> Follow-up revision: production delivery uses a Feishu `interactive` card with `lark_md` for bold titles and links; the earlier `post` payload remains only as a backward-compatible low-level sender test.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 将飞书早报从显示 Markdown 符号的普通文本改为层级清晰、原文链接可点击且兼容 Webhook 的 `post` 富文本消息，同时保留本地 Markdown 输出。

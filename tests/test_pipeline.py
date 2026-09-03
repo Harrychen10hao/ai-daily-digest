@@ -16,7 +16,7 @@ def test_generate_pipeline_saves_markdown_and_structured_digest(tmp_path: Path):
     assert load_digest(tmp_path / "latest_digest.json")["trend"]
 
 
-def test_send_pipeline_uses_structured_digest_for_feishu_posts(tmp_path: Path, monkeypatch):
+def test_send_pipeline_uses_structured_digest_for_feishu_cards(tmp_path: Path, monkeypatch):
     settings = Settings(data_dir=tmp_path, feishu_webhook_url="https://example.com/hook")
     digest = {
         "trend": "趋势",
@@ -51,8 +51,8 @@ def test_send_pipeline_uses_structured_digest_for_feishu_posts(tmp_path: Path, m
 
     send_pipeline(settings)
 
-    assert captured[0]["msg_type"] == "post"
-    assert "真实标题" in str(captured[0])
+    assert captured[0]["msg_type"] == "interactive"
+    assert "**真实标题**" in str(captured[0])
     assert "https://example.com/article" in str(captured[0])
 
 
