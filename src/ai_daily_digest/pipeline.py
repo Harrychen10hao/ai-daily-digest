@@ -11,7 +11,7 @@ from .config import Settings, load_sources
 from .dedupe import deduplicate
 from .fetchers import NewsFetcher
 from .filtering import select_articles
-from .formatter import format_digest, split_message
+from .formatter import format_digest, format_feishu_posts
 from .models import Article
 from .summarize import LLMClient, MissingCredentialError, SummarizationError, build_fallback_digest
 
@@ -32,6 +32,20 @@ def load_articles(path: Path) -> list[Article]:
         raise FileNotFoundError(f"找不到文章文件 {path}，请先运行 fetch。")
     payload = json.loads(path.read_text(encoding="utf-8"))
     return [Article.from_dict(item) for item in payload]
+
+
+def save_digest(digest: dict[str, Any], path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(digest, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def load_digest(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        raise FileNotFoundError(f"找不到早报结构化文件 {path}，请先运行 generate。")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"早报结构化文件必须是 JSON 对象: {path}")
+    return payload
 
 
 def fetch_pipeline(settings: Settings, now: datetime | None = None) -> list[Article]:
@@ -65,24 +79,21 @@ def generate_pipeline(settings: Settings, articles: list[Article] | None = None,
                 digest = build_fallback_digest(articles)
         finally:
             client.close()
+    save_digest(digest, settings.data_dir / "latest_digest.json")
     text = format_digest(digest)
     (settings.data_dir / "latest_digest.md").write_text(text, encoding="utf-8")
     return text
 
 
-def send_pipeline(settings: Settings, digest_text: str | None = None) -> list[str]:
+def send_pipeline(settings: Settings) -> list[dict[str, Any]]:
     if not settings.feishu_webhook_url:
         raise MissingCredentialError("未配置 FEISHU_WEBHOOK_URL，无法发送飞书消息。")
-    if digest_text is None:
-        digest_path = settings.data_dir / "latest_digest.md"
-        if not digest_path.exists():
-            raise FileNotFoundError(f"找不到早报文件 {digest_path}，请先运行 generate。")
-        digest_text = digest_path.read_text(encoding="utf-8")
-    messages = split_message(digest_text, settings.feishu_max_chars)
+    digest = load_digest(settings.data_dir / "latest_digest.json")
+    messages = format_feishu_posts(digest, max_chars=settings.feishu_max_chars)
     from .feishu import FeishuClient
     client = FeishuClient(settings.feishu_webhook_url, timeout=settings.request_timeout, retries=settings.request_retries)
     try:
-        client.send(messages)
+        client.send_posts(messages)
     finally:
         client.close()
     return messages

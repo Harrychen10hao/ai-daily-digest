@@ -10,7 +10,8 @@
 - 模型只能使用本次实际抓取文章的原始链接，模型输出链接会被再次校验。
 - 单个 RSS/API 来源失败不会阻断其他来源。
 - 没有 `LLM_API_KEY` 时使用本地降级早报；没有飞书 Webhook 时发送命令给出清晰提示。
-- 飞书消息过长会按章节自动拆分并重试发送。
+- 飞书使用 `post` 富文本消息：标题和新闻标题加粗，重点内容分层展示，原文链接可点击。
+- 飞书消息过长会按完整新闻条目自动拆分并重试发送；本地同时保存 Markdown 和结构化 JSON 早报。
 
 ## 安装
 
@@ -71,10 +72,10 @@ Copy-Item .env.example .env
 # 只抓取并保存 data/latest_articles.json
 python -m ai_daily_digest fetch
 
-# 读取已抓取文章，生成并保存 data/latest_digest.md
+# 读取已抓取文章，生成并保存 data/latest_digest.md 和 data/latest_digest.json
 python -m ai_daily_digest generate
 
-# 发送已生成的早报到飞书
+# 发送已生成的富文本早报到飞书
 python -m ai_daily_digest send
 
 # 完整执行：抓取 -> 生成 -> 发送
@@ -98,7 +99,7 @@ python -m ai_daily_digest --test-mode run --dry-run
 2. 打开群设置，进入“群机器人”或“机器人”管理，添加“自定义机器人”。
 3. 设置名称和头像，按需要配置关键词、签名或 IP 白名单安全策略。
 4. 创建后复制 Webhook 地址，填入 `.env` 的 `FEISHU_WEBHOOK_URL`。
-5. 先运行 `python -m ai_daily_digest --test-mode run --dry-run` 确认内容，再运行 `send` 或完整 `run`。
+5. 先运行 `python -m ai_daily_digest --test-mode run --dry-run` 确认内容，再运行 `send` 或完整 `run`。`send` 会读取 `data/latest_digest.json`，以飞书富文本消息发送；如果修改了来源或重新生成内容，请先重新运行 `generate`。
 
 初版使用群机器人 Webhook 发送群消息，不实现个人私聊权限。如果机器人不能直接给个人发送，使用只有自己成员的飞书群即可。
 

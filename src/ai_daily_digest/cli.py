@@ -76,7 +76,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.dry_run:
                 logger.info("dry-run：未调用飞书 Webhook")
                 return 0
-            send_pipeline(settings, text)
+            send_pipeline(settings)
             return 0
     except FileNotFoundError as exc:
         logger.error("%s", exc)
