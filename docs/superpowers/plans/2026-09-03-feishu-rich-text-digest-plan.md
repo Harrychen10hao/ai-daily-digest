@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 将飞书早报从显示 Markdown 符号的普通文本改为层级清晰、标题加粗、原文链接可点击的 `post` 富文本消息，同时保留本地 Markdown 输出。
+**Goal:** 将飞书早报从显示 Markdown 符号的普通文本改为层级清晰、原文链接可点击且兼容 Webhook 的 `post` 富文本消息，同时保留本地 Markdown 输出。
 
 **Architecture:** 生成阶段继续产出 `latest_digest.md`，并新增经过校验的 `latest_digest.json`。发送阶段读取 JSON，由独立的飞书富文本格式化器生成一个或多个 `post` payload；低层 `FeishuClient.send()` 保留普通文本能力，并新增 `send_posts()` 发送结构化 payload。所有网络测试使用 `httpx.MockTransport`。
 
@@ -59,7 +59,7 @@ def test_format_feishu_posts_uses_hierarchy_bold_titles_and_clickable_links():
 
     assert payload["msg_type"] == "post"
     assert payload["content"]["post"]["zh_cn"]["title"] == "AI 产品与 UX 科技早报"
-    assert any(element.get("style") == ["bold"] and element["text"] == "Agent 交互更新" for element in flattened)
+    assert any(element.get("tag") == "text" and element["text"] == "Agent 交互更新" for element in flattened)
     assert {element["tag"] for element in flattened} >= {"text", "a"}
     assert any(element.get("href") == "https://example.com/agent" for element in flattened)
     assert all("#" not in element.get("text", "") for element in flattened)
@@ -95,7 +95,7 @@ Expected: new tests fail because `format_feishu_posts` does not exist yet。
 
 - [x] **Step 3: Implement the minimal formatter**
 
-在 `formatter.py` 中新增内部 helper，将每一行构造成飞书富文本元素：普通文本使用 `{"tag": "text", "text": ...}`，标题使用 `style: ["bold"]`，链接使用 `{"tag": "a", "text": "查看原文", "href": url}`。使用 `SECTION_NAMES` 保持现有分类顺序，空分类跳过；每个新闻条目作为不可拆分的行集合，按 `max_chars` 估算文本长度分组，最终构造：
+在 `formatter.py` 中新增内部 helper，将每一行构造成飞书富文本元素：普通文本使用 `{"tag": "text", "text": ...}`，链接使用 `{"tag": "a", "text": "查看原文", "href": url}`。不要添加 `style` 等群机器人 `post` 不支持的字段。使用 `SECTION_NAMES` 保持现有分类顺序，空分类跳过；每个新闻条目作为不可拆分的行集合，按 `max_chars` 估算文本长度分组，最终构造：
 
 ```python
 {

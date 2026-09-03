@@ -29,7 +29,7 @@ def test_split_message_respects_limit_and_preserves_all_content():
     assert "乙" * 20 in "\n".join(chunks)
 
 
-def test_format_feishu_posts_uses_hierarchy_bold_titles_and_clickable_links():
+def test_format_feishu_posts_uses_hierarchy_and_clickable_links():
     digest = {
         "trend": "AI 产品从聊天走向工作流。",
         "highlights": [{
@@ -53,10 +53,29 @@ def test_format_feishu_posts_uses_hierarchy_bold_titles_and_clickable_links():
 
     assert payload["msg_type"] == "post"
     assert payload["content"]["post"]["zh_cn"]["title"] == "AI 产品与 UX 科技早报"
-    assert any(element.get("style") == ["bold"] and element["text"] == "Agent 交互更新" for element in flattened)
+    assert any(element.get("tag") == "text" and element["text"] == "Agent 交互更新" for element in flattened)
     assert {element["tag"] for element in flattened} >= {"text", "a"}
     assert any(element.get("href") == "https://example.com/agent" for element in flattened)
     assert all("#" not in element.get("text", "") for element in flattened)
+
+
+def test_format_feishu_posts_uses_only_supported_post_element_fields():
+    digest = {
+        "trend": "趋势",
+        "highlights": [{
+            "title": "重点标题",
+            "summary": "摘要",
+            "why": "原因",
+            "url": "https://example.com/highlight",
+        }],
+        "ai_product": [], "ux_design": [], "tech": [], "paper": [], "github": [],
+        "action_suggestions": [],
+    }
+
+    posts = format_feishu_posts(digest)
+    elements = [element for line in posts[0]["content"]["post"]["zh_cn"]["content"] for element in line]
+
+    assert all("style" not in element for element in elements)
 
 
 def test_format_feishu_posts_omits_empty_sections_and_splits_items():

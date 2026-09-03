@@ -22,10 +22,8 @@ def _single_line(value: Any) -> str:
 
 
 def _text_element(text: str, bold: bool = False) -> dict[str, Any]:
-    element: dict[str, Any] = {"tag": "text", "text": text}
-    if bold:
-        element["style"] = ["bold"]
-    return element
+    # Feishu custom-bot post elements reject the optional style field.
+    return {"tag": "text", "text": text}
 
 
 def _line_length(line: list[dict[str, Any]]) -> int:
