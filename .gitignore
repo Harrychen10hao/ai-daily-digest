@@ -11,5 +11,6 @@ __pycache__/
 *.p12
 data/latest_articles.json
 data/latest_digest.md
+data/latest_digest.json
 data/*.log
 *.egg-info/

@@ -56,7 +56,11 @@ def _feishu_item_lines(item: dict[str, Any], section: str, number: str = "") -> 
             "github": "值得关注的原因",
         }.get(section, "值得关注的原因")
 
-    lines = [[_text_element(f"{number} ") if number else _text_element(""), _text_element(title, bold=True)]]
+    title_line: list[dict[str, Any]] = []
+    if number:
+        title_line.append(_text_element(f"{number} "))
+    title_line.append(_text_element(title, bold=True))
+    lines = [title_line]
     if summary:
         lines.append([_text_element(f"{summary_label}：{summary}")])
     if why:

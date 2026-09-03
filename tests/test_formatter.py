@@ -74,3 +74,26 @@ def test_format_feishu_posts_omits_empty_sections_and_splits_items():
     assert all(post["msg_type"] == "post" for post in posts)
     assert all(post["content"]["post"]["zh_cn"]["content"] for post in posts)
     assert "AI 产品体验" not in str(posts)
+
+
+def test_format_feishu_posts_does_not_emit_empty_text_elements():
+    digest = {
+        "trend": "趋势",
+        "highlights": [],
+        "ai_product": [{
+            "title": "产品更新",
+            "summary": "摘要",
+            "why": "启发",
+            "url": "https://example.com/product",
+        }],
+        "ux_design": [],
+        "tech": [],
+        "paper": [],
+        "github": [],
+        "action_suggestions": [],
+    }
+
+    posts = format_feishu_posts(digest)
+    elements = [element for line in posts[0]["content"]["post"]["zh_cn"]["content"] for element in line]
+
+    assert not any(element.get("tag") == "text" and element.get("text") == "" for element in elements)
